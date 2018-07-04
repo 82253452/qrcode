@@ -1,10 +1,10 @@
+import QRScannerView from './rnacqrcode';
 import React, {Component} from 'react';
 
-import {StyleSheet, Text, TouchableOpacity, Button, View, TouchableHighlight, Alert} from 'react-native';
+import {StyleSheet, Text, View, TouchableHighlight, Alert} from 'react-native';
 
-import QRCodeScanner from './rnqrcode';
+export default class DefaultScreen extends Component {
 
-export default class Qrcode extends Component {
     static navigationOptions = {
         tabBarLabel: '检票'
     };
@@ -20,18 +20,7 @@ export default class Qrcode extends Component {
         };
     }
 
-    componentDidMount() {
-
-    }
-
-    refreshCamera() {
-        this.setState({
-            enrollUpInfo: {}
-        });
-        this.scanner.reactivate();
-    }
-
-    onSuccess(e) {
+    barcodeReceived = (e) => {
         this.state.id = e.data;
         if (e.data.length < 6) {
             this._queryEnrollUp(e.data)
@@ -40,8 +29,44 @@ export default class Qrcode extends Component {
         }
     }
 
-    _ticket(id) {
+    render() {
+        return (
+
+            < QRScannerView
+                ref={(node) => {
+                    this.scanner = node
+                }}
+                onRead={this.barcodeReceived.bind(this)}
+
+                renderTopBarView={() => this._renderTitleBar()}
+
+                renderBottomMenuView={() => this._renderMenu(this)}
+                bottomMenuHeight={300}
+                bottomMenuStyle={{backgroundColor: '#000', height: 300}}
+                autoFocus={true}
+                hintText={''}
+            />
+        )
+    }
+
+    refreshCamera = () => {
+        this.setState({
+            enrollUpInfo: {}
+        });
+        this.scanner.reactivate();
+    }
+
+    _ticket = () => {
         var that = this;
+        if (this.state.enrollUpInfo.status && this.state.enrollUpInfo.status === '2') {
+
+        } else {
+            Alert.alert('提示', '该状态不可以检票', [{
+                text: '确认',
+                onPress: () => that.refreshCamera()
+            }]);
+            return;
+        }
         const url = 'http://innter.fast4ward.cn/pay/rest/order/tickets?serialNo=' + this.state.id;
         fetch(url, {
             method: "GET",
@@ -69,7 +94,7 @@ export default class Qrcode extends Component {
             .done();
     }
 
-    _queryOrder(serialNo) {
+    _queryOrder = (serialNo) => {
         var that = this;
         var url = 'http://innter.fast4ward.cn/pay/rest/pay/orderQuery?serialNo=' + serialNo;
         fetch(url, {
@@ -79,8 +104,7 @@ export default class Qrcode extends Component {
             }
         }).then((response) => response.json())
             .then((responseData) => {
-                console.log(responseData);
-                if (responseData.code == '1000') {
+                if (responseData.code == '1000' && responseData.data) {
                     var data = responseData.data.goodsData;
                     data.status = responseData.data.order.status;
                     that.setState({
@@ -99,7 +123,7 @@ export default class Qrcode extends Component {
             .done();
     }
 
-    _queryEnrollUp(id) {
+    _queryEnrollUp = (id) => {
         var that = this;
         var url = 'http://innter.fast4ward.cn/innter/rest/enroller/getEnrollUp?id=' + id;
         fetch(url, {
@@ -109,7 +133,7 @@ export default class Qrcode extends Component {
             }
         }).then((response) => response.json())
             .then((responseData) => {
-                if (responseData.code == '1000') {
+                if (responseData.code == '1000' && responseData.data) {
                     var data = responseData.data;
                     if (data.status != '6') {
                         data.status = '2'
@@ -174,63 +198,54 @@ export default class Qrcode extends Component {
         }
     }
 
-    render() {
+    _renderTitleBar() {
         return (
-            <QRCodeScanner
-                ref={(node) => {
-                    this.scanner = node
-                }}
-                bottomContent={
-                    <View style={styles.buttonTouchable}>
-                        <Text style={styles.buttonText}></Text>
-                        <Text
-                            style={styles.buttonText}>门票类型:{this.state.enrollUpInfo.type ? this._renderType(this.state.enrollUpInfo.type) : ''}</Text>
-                        <Text
-                            style={styles.buttonText}>赛事名称:{this.state.enrollUpInfo.sportName ? this.state.enrollUpInfo.sportName : ''}</Text>
-                        <Text
-                            style={styles.buttonText}>数量:{this.state.enrollUpInfo.num ? this.state.enrollUpInfo.num : ''}</Text>
-                        <Text
-                            style={styles.buttonText}>金额:{this.state.enrollUpInfo.amount ? this.state.enrollUpInfo.amount : ''}</Text>
-                        <Text
-                            style={styles.buttonText}>手机号:{this.state.enrollUpInfo.phone ? this.state.enrollUpInfo.phone : ''}</Text>
-                        <Text
-                            style={styles.buttonText}>状态:{this.state.enrollUpInfo.status ? this._renderStatus(this.state.enrollUpInfo.status) : ''}</Text>
-                        <View style={{flexDirection: 'row', width: 300}}>
-                            <TouchableHighlight style={{
-                                flex: 1, width: 100,
-                                height: 50,
-                                backgroundColor: '#0066CC',
-                                borderRadius: 10,
-                                justifyContent: 'center'
-                            }}
-                                                onPress={this._ticket.bind(this)}>
-
-                                <Text style={{textAlign: 'center', color: '#fff'}}>检票</Text>
-                            </TouchableHighlight>
-                            <TouchableHighlight style={{
-                                flex: 1, marginLeft: 50, width: 100,
-                                height: 50,
-                                backgroundColor: '#0066CC',
-                                borderRadius: 10,
-                                justifyContent: 'center'
-                            }}
-                                                onPress={this.refreshCamera.bind(this)}>
-
-                                <Text style={{textAlign: 'center', color: '#fff'}}>重新扫描</Text>
-                            </TouchableHighlight>
-                        </View>
-                    </View>
-                }
-                onRead={this.onSuccess.bind(this)}
-                fadeIn={false}
-                topViewStyle={styles.topViewStyle}
-                bottomViewStyle={[styles.bottomViewStyle]}
-                cameraStyle={styles.cameraStyle}
-                containerStyle={styles.containerStyle}
-                autoFocus={true}
-                showMarker={true}
-            />
+            <View></View>
         );
+    }
+
+    _renderMenu(that) {
+        return (
+            <View style={styles.buttonTouchable}>
+                <Text style={styles.buttonText}></Text>
+                <Text
+                    style={styles.buttonText}>门票类型:{this.state.enrollUpInfo.type ? this._renderType(this.state.enrollUpInfo.type) : ''}</Text>
+                <Text
+                    style={styles.buttonText}>赛事名称:{this.state.enrollUpInfo.sportName ? this.state.enrollUpInfo.sportName : ''}</Text>
+                <Text
+                    style={styles.buttonText}>数量:{this.state.enrollUpInfo.num ? this.state.enrollUpInfo.num : ''}</Text>
+                <Text
+                    style={styles.buttonText}>金额:{this.state.enrollUpInfo.amount ? this.state.enrollUpInfo.amount : ''}</Text>
+                <Text
+                    style={styles.buttonText}>手机号:{this.state.enrollUpInfo.phone ? this.state.enrollUpInfo.phone : ''}</Text>
+                <Text
+                    style={styles.buttonText}>状态:{this.state.enrollUpInfo.status ? this._renderStatus(this.state.enrollUpInfo.status) : ''}</Text>
+                <View style={{flexDirection: 'row', width: 300}}>
+                    <TouchableHighlight style={{
+                        flex: 1, width: 100,
+                        height: 50,
+                        backgroundColor: '#0066CC',
+                        borderRadius: 10,
+                        justifyContent: 'center'
+                    }}
+                                        onPress={this._ticket}>
+
+                        <Text style={{textAlign: 'center', color: '#fff'}}>检票</Text>
+                    </TouchableHighlight>
+                    <TouchableHighlight style={{
+                        flex: 1, marginLeft: 50, width: 100,
+                        height: 50,
+                        backgroundColor: '#0066CC',
+                        borderRadius: 10,
+                        justifyContent: 'center'
+                    }}
+                                        onPress={this.refreshCamera}>
+
+                        <Text style={{textAlign: 'center', color: '#fff'}}>重新扫描</Text>
+                    </TouchableHighlight>
+                </View>
+            </View>
+        )
     }
 }
 
@@ -247,7 +262,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontSize: 18,
-        color: 'rgb(0,122,255)',
+        color: '#fff',
     },
     buttonTouchable: {
         padding: 16,

@@ -2,6 +2,7 @@ import React from 'react';
 import {View, Text, TouchableHighlight,Button} from 'react-native';
 import {createStackNavigator} from 'react-navigation';
 import qrCode from './components/qrcode'
+import rnqrCode from './components/qrcode2'
 class HomeScreen extends React.Component {
     _onPressButton() {
         this.props.navigation.navigate('QrCode')
@@ -25,8 +26,9 @@ export default createStackNavigator(
     {
         Home: HomeScreen,
         QrCode: qrCode,
+        RnRqcode: rnqrCode,
     },
     {
-        initialRouteName: 'Home',
+        initialRouteName: 'RnRqcode',
     }
 );
